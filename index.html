@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Firestore</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: "Times New Roman", serif;
+            font-size: 26px;
+        }
+
+        label {
+            display: inline-block;
+            width: 170px;
+            margin-bottom: 30px;
+        }
+
+        input, select {
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            padding: 5px 8px;
+            width: 263px;
+            box-sizing: border-box;
+        }
+
+        select {
+            width: 247px;
+        }
+
+        hr {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        button {
+            font-family: Arial, sans-serif;
+            font-size: 22px;
+            padding: 7px 15px;
+            margin-right: 3px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <label for="NameBox">Name</label>
+    <input id="NameBox" type="text"><br>
+
+    <label for="RollBox">RollNo</label>
+    <input id="RollBox" type="text"><br>
+
+    <label for="Secbox">Section</label>
+    <input id="Secbox" type="text"><br>
+
+    <label for="Genbox">Gender</label>
+    <select id="Genbox">
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+    </select>
+
+    <hr>
+
+    <button id="FSInsbtn">INSERT</button>
+    <button id="FSSelbtn">SELECT</button>
+    <button id="FSUpdbtn">UPDATE</button>
+    <button id="FSDelbtn">DELETE</button>
+
+<script type="module">
+
+// =====================================
+// FIREBASE IMPORTS
+// =====================================
+
+import { initializeApp } from
+"https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+
+import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc,
+    updateDoc,
+    deleteDoc
+} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+
+// =====================================
+// FIREBASE CONFIGURATION
+// =====================================
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBXw8R6zEJQkpT6P_ZihjjhHYr2KYjpVjE",
+    authDomain: "oppgave2-d3539.firebaseapp.com",
+    projectId: "oppgave2-d3539",
+    storageBucket: "oppgave2-d3539.firebasestorage.app",
+    messagingSenderId: "561262695521",
+    appId: "1:561262695521:web:9ce66da9aa2f3f5b9bc620"
+};
+
+// =====================================
+// CONNECT TO CLOUD FIRESTORE
+// =====================================
+
+const app = initializeApp(firebaseConfig);
+const firestore = getFirestore(app);
+
+// =====================================
+// HTML ELEMENTS
+// =====================================
+
+const namebox = document.getElementById("NameBox");
+const rollbox = document.getElementById("RollBox");
+const secbox = document.getElementById("Secbox");
+const genbox = document.getElementById("Genbox");
+
+// =====================================
+// CHECK INPUT
+// =====================================
+
+function checkInput() {
+    if (!namebox.value.trim() ||
+        !rollbox.value.trim() ||
+        !secbox.value.trim()) {
+
+        alert("Please fill in all fields!");
+        return false;
+    }
+
+    return true;
+}
+
+// =====================================
+// CLOUD FIRESTORE
+// =====================================
+
+// INSERT
+async function InsertFirestore() {
+    if (!checkInput()) return;
+
+    try {
+        await setDoc(
+            doc(firestore, "TheStudents", rollbox.value.trim()),
+            {
+                NameOfStd: namebox.value.trim(),
+                RollNo: rollbox.value.trim(),
+                Section: secbox.value.trim(),
+                Gender: genbox.value
+            }
+        );
+
+        alert("Cloud Firestore: Data stored successfully!");
+
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+// =====================================
+// SELECT
+// =====================================
+
+async function SelectFirestore() {
+    if (!rollbox.value.trim()) {
+        alert("Enter RollNo first!");
+        return;
+    }
+
+    try {
+        const studentRef = doc(
+            firestore,
+            "TheStudents",
+            rollbox.value.trim()
+        );
+
+        const snapshot = await getDoc(studentRef);
+
+        if (snapshot.exists()) {
+            const data = snapshot.data();
+
+            namebox.value = data.NameOfStd || "";
+            rollbox.value = data.RollNo || "";
+            secbox.value = data.Section || "";
+            genbox.value = data.Gender || "Male";
+
+            alert("Cloud Firestore: Student found!");
+
+        } else {
+            alert("Student not found in Cloud Firestore!");
+        }
+
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+// =====================================
+// UPDATE
+// =====================================
+
+async function UpdateFirestore() {
+    if (!checkInput()) return;
+
+    try {
+        const studentRef = doc(
+            firestore,
+            "TheStudents",
+            rollbox.value.trim()
+        );
+
+        const snapshot = await getDoc(studentRef);
+
+        if (!snapshot.exists()) {
+            alert("Student not found in Cloud Firestore!");
+            return;
+        }
+
+        await updateDoc(studentRef, {
+            NameOfStd: namebox.value.trim(),
+            RollNo: rollbox.value.trim(),
+            Section: secbox.value.trim(),
+            Gender: genbox.value
+        });
+
+        alert("Cloud Firestore: Data updated successfully!");
+
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+// =====================================
+// DELETE
+// =====================================
+
+async function DeleteFirestore() {
+    if (!rollbox.value.trim()) {
+        alert("Enter RollNo first!");
+        return;
+    }
+
+    if (!confirm("Delete this student from Cloud Firestore?")) {
+        return;
+    }
+
+    try {
+        const studentRef = doc(
+            firestore,
+            "TheStudents",
+            rollbox.value.trim()
+        );
+
+        const snapshot = await getDoc(studentRef);
+
+        if (!snapshot.exists()) {
+            alert("Student not found in Cloud Firestore!");
+            return;
+        }
+
+        await deleteDoc(studentRef);
+
+        alert("Cloud Firestore: Student deleted!");
+
+        namebox.value = "";
+        rollbox.value = "";
+        secbox.value = "";
+        genbox.value = "Male";
+
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+// =====================================
+// BUTTON EVENTS
+// =====================================
+
+document.getElementById("FSInsbtn")
+    .addEventListener("click", InsertFirestore);
+
+document.getElementById("FSSelbtn")
+    .addEventListener("click", SelectFirestore);
+
+document.getElementById("FSUpdbtn")
+    .addEventListener("click", UpdateFirestore);
+
+document.getElementById("FSDelbtn")
+    .addEventListener("click", DeleteFirestore);
+
+</script>
+
+</body>
+</html>
